@@ -1,0 +1,27 @@
+{% extends "OCPlatformBundle::layout.html.twig" %}
+
+{% block title %}
+	lecture d'une annonce {{ parent() }}
+{% endblock %}
+
+{% block ocplatform_body %}
+	<h2>{{ advert.title }}</h2>
+	<i>par {{ advert.author }}, le {{ advert.date|date('d/m/Y') }}</i>
+	
+	<div class="well">{{ advert.content }}</div>
+	
+	<p>
+		<a href="{{ path('oc_platform_home')}}" class="btn btn-default">
+		 <i class="glyphicon glyphicon-chevron-left"></i>
+		 Retour a la liste
+		</a>
+		<a href="{{path('oc_platform_edit',{'id':advert.id})}}" class="btn btn-default">
+		<i class="glyphicon glyphicon-chevron-edit"></i>
+		 modifier l'annonce
+		</a>
+		<a href="{{path('oc_platform_edit',{'id':advert.id})}}" class="btn btn-danger">
+		<i class="glyphicon glyphicon-chevron-trash"></i>
+		 supprimer l'annonce
+		</a>
+	</p>
+{% endblock %}
