@@ -8,7 +8,21 @@
 	<h2>{{ advert.title }}</h2>
 	<i>par {{ advert.author }}, le {{ advert.date|date('d/m/Y') }}</i>
 	
-	<div class="well">{{ advert.content }}</div>
+	<div class="well">
+	    {{ advert.content }}
+	    {% if advert.image is not null %}
+	    	<img src="{{ advert.image.url }}" alt="{{ advert.image.alt }}">
+	    {% endif %}
+	    
+	</div>
+	<div class="well">
+	<h3>Candidatures</h3>
+	<ul class="list-group">
+		{% for app in listapplication %}
+			<li class="list-group-item">{{ app.author }} à postulé le {{ app.date|date('m/d/Y') }} avec ce message {{ app.content }}</li>
+		{% endfor %}
+	</ul>	
+	</div>
 	
 	<p>
 		<a href="{{ path('oc_platform_home')}}" class="btn btn-default">

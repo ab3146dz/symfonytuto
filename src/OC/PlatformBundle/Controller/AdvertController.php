@@ -1,17 +1,24 @@
 <?php
 	namespace OC\PlatformBundle\Controller;
 	
+	use OC\PlatformBundle\Entity\Advert;
+	use OC\PlatformBundle\Entity\Image;
+	use OC\PlatformBundle\Entity\Application;
 	use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 	use Symfony\Component\HttpFoundation\Request;
 	use Symfony\Component\HttpFoundation\Response;
-	//use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+		//use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			
 	class AdvertController extends Controller{
 		
 		public function indexAction($page,Request $request){
 						
 				// Notre liste d'annonce en dur
-				$listAdverts = array(
+				$em=$this->getDoctrine()->getEntityManager();
+				$listAdverts=$em->getRepository('OC\PlatformBundle\Entity\Advert')
+				->findAll();
+				/*$listAdverts = array(
 						array(
 								'title'   => 'Recherche développpeur Symfony',
 								'id'      => 1,
@@ -30,7 +37,7 @@
 								'author'  => 'Mathieu',
 								'content' => 'Nous proposons un poste pour webdesigner. Blabla',
 								'date'    => new \DateTime())
-				);
+				);*/
 				
 			
 			//les numeros de pages sont >=1
@@ -52,7 +59,7 @@
 		
 		public function viewAction($id){
 			
-			$advert=array(
+			/*$advert=array(
 					
 					'title'=>'recherche developpeur symfony2',
 					'id'      => $id,
@@ -60,10 +67,22 @@
 					'content' => 'Nous recherchons un développeur Symfony2 débutant sur Lyon. Blabla',
 					'date'    => new \DateTime()
 					
-			);
+			);*/
+			$em=$this->getDoctrine()->getEntityManager();
+			
+			$advert=$em->getRepository('OCPlatformBundle:Advert')->find($id);
+			
+			if(null===$advert){
+				throw new NotFoundHttpException("aucun Advert ne correspond à $id");
+			}
+			
+			$listApplication=$em->getRepository('OCPlatformBundle:Application')
+			->findBy(array('advert'=> $advert));
+			
 			return $this->render('OCPlatformBundle:Advert:view.html.twig',
 					array(
-							'advert'=> $advert
+							'advert'=> $advert,
+							'listapplication' =>$listApplication
 					));
 			
 		}
@@ -80,17 +99,54 @@
 			
 			//utilisation de notre service Antispam
 			//on récupère le service
-			$antispam= $this->container->get("oc_platform.Antispam");
+			//$antispam= $this->container->get("oc_platform.Antispam");
 			
 			//je pars du principe que $text contient le texte d'un message quelconque
-			$text="...";
+			/*$text="...";
 			if($antispam->isSpam($text)){
 				throw new \Exception("votre message a été detecté comme spam!");
-			}
+			}*/
 			//sinon le message n'est pas un spam et on continue
 			
+			//creation de l'objet advert
+			$advert=new Advert();
+			$advert->setTitle("Recherche developpeur Symfony3");
+			$advert->setAuthor("Alex");
+			$advert->setContent("nous recherchons un developpeur symfony débutant");
+			
+			$image=new Image();
+			$image->setUrl("http://sdz-upload.s3.amazonaws.com/prod/upload/job-de-reve.jpg");
+			$image->setAlt("image de la marque Ferrari d'automobile");
+			
+			$advert->setImage($image);
+			
+			$app1=new Application();
+			$app1->setAuthor("ali");
+			$app1->setContent("je suis interessé par cet offre");
+			$app1->setAdvert($advert);
+			
+			$app2=new Application();
+			$app2->setAuthor("younes");
+			$app2->setContent("c'est un offre interessant, je compte deposer ma candidature");
+			$app2->setAdvert($advert);
+			
+			
+			//appel du EntityManager
+			$em=$this->getDoctrine()->getManager();
+			
+			$em->persist($advert);
+			//si on n'avait pas defiin le cascade={"persist"}
+			//on devrait persister l'entité Image avec 
+			//$em->persist($image)
+			
+			//on doit persister les applications car pas de cascade
+			$em->persist($app1);
+			$em->persist($app2);
+			//on declenche l'enregistrement'
+			$em->flush();
 			//appel de la vue d'ajout d'une annonce
-			$content=$this->get('templating')->render('OCPlatformBundle:Advert:add.html.twig');
+			
+			$content=$this->get('templating')->render('OCPlatformBundle:Advert:add.html.twig',array('advert'=>$advert));
 			return new Response($content);
 		}
 		
@@ -138,11 +194,14 @@
 		
 		public function menuAction($limit){
 			//exemple de liste
-			$listAdverts=array(
+			$em=$this->getDoctrine()->getEntityManager();
+			$listAdverts=$em->getRepository('OC\PlatformBundle\Entity\Advert')
+			->findBy(array(),array('date'=>'desc'),$limit);
+			/*$listAdverts=array(
 					array('id'=>2,'title'=>'developpeur PHP'),
 					array('id'=>3,'title'=>'webmaster'),
 					array('id'=>4,'title'=>'consultant')
-			);
+			);*/
 			
 			return $this->render('OCPlatformBundle:Advert:menu.html.twig',array(
 					'listAdverts'=>$listAdverts

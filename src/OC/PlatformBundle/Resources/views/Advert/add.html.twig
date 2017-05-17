@@ -1,7 +1,19 @@
-<ul class="nav nav-pills nav-stacked">
-	{% for advert in $listAdverts %}
-	<li>
-		<a href="{{ path('oc_platform_view',{'id':advert.id}) }}">{{ advert.title }}</a>
-	</li>
-	{% endfor %}
-</ul>
+{% extends "OCPlatformBundle::layout.html.twig" %}
+
+{% block title %}
+	ajouter une annonce {{ parent() }}
+{% endblock %}
+
+{% block ocplatform_body %}
+	<h2>ajouter une annonce</h2>
+	
+	{{ include("OCPlatformBundle:Advert:form.html.twig") }}
+	
+		
+	<p>
+		<a href="{{ path('oc_platform_view',{'id':advert.id}) }}" class="btn btn-default">
+		<i class="glyphicon glyphicon-chevron-left"></i>
+		affichage de l'Advert ajouté
+		</a>
+	</p>
+{% endblock %}
