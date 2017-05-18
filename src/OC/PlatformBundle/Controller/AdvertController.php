@@ -4,6 +4,8 @@
 	use OC\PlatformBundle\Entity\Advert;
 	use OC\PlatformBundle\Entity\Image;
 	use OC\PlatformBundle\Entity\Application;
+	use OC\PlatformBundle\Entity\AdvertSkills;
+	
 	use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 	use Symfony\Component\HttpFoundation\Request;
 	use Symfony\Component\HttpFoundation\Response;
@@ -59,15 +61,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 		
 		public function viewAction($id){
 			
-			/*$advert=array(
-					
-					'title'=>'recherche developpeur symfony2',
-					'id'      => $id,
-					'author'  => 'Alexandre',
-					'content' => 'Nous recherchons un développeur Symfony2 débutant sur Lyon. Blabla',
-					'date'    => new \DateTime()
-					
-			);*/
+			
 			$em=$this->getDoctrine()->getEntityManager();
 			
 			$advert=$em->getRepository('OCPlatformBundle:Advert')->find($id);
@@ -76,13 +70,16 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 				throw new NotFoundHttpException("aucun Advert ne correspond à $id");
 			}
 			
+			$listskill=$em->getRepository("OCPlatformBundle:AdvertSkills")->findBy(array('advert'=>$advert));
 			$listApplication=$em->getRepository('OCPlatformBundle:Application')
 			->findBy(array('advert'=> $advert));
 			
+			//$listCategories=$advert->getCategories();
 			return $this->render('OCPlatformBundle:Advert:view.html.twig',
 					array(
 							'advert'=> $advert,
-							'listapplication' =>$listApplication
+							'listapplication' =>$listApplication,
+							'listskill'=>$listskill
 					));
 			
 		}
@@ -110,23 +107,23 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			
 			//creation de l'objet advert
 			$advert=new Advert();
-			$advert->setTitle("Recherche developpeur Symfony3");
-			$advert->setAuthor("Alex");
-			$advert->setContent("nous recherchons un developpeur symfony débutant");
+			$advert->setTitle("Recherche développeur c++ ");
+			$advert->setAuthor("Abi");
+			$advert->setContent("nous recherchons un développeur c++");
 			
 			$image=new Image();
-			$image->setUrl("http://sdz-upload.s3.amazonaws.com/prod/upload/job-de-reve.jpg");
-			$image->setAlt("image de la marque Ferrari d'automobile");
+			$image->setUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/BjarneStroustrup.jpg/220px-BjarneStroustrup.jpg");
+			$image->setAlt("Bjarne Stroustrup, l'inventeur du C++");
 			
 			$advert->setImage($image);
 			
 			$app1=new Application();
-			$app1->setAuthor("ali");
+			$app1->setAuthor("alain");
 			$app1->setContent("je suis interessé par cet offre");
 			$app1->setAdvert($advert);
 			
 			$app2=new Application();
-			$app2->setAuthor("younes");
+			$app2->setAuthor("christophe");
 			$app2->setContent("c'est un offre interessant, je compte deposer ma candidature");
 			$app2->setAdvert($advert);
 			
@@ -164,16 +161,40 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			//ici on doit se connecter à la bdd pour recuperer les données
 			//.........
 			//pour l'instant on va forcer en dur les données
+			$em=$this->getDoctrine()->getManager();
+			$advert=$em->getRepository('OCPlatformBundle:Advert')->find($id);
 			
-			$advert=array(
-					
-					'title'=>'recherche developpeur symfony2',
-					'id'      => $id,
-					'author'  => 'Alexandre',
-					'content' => 'Nous recherchons un développeur Symfony2 débutant sur Lyon. Blabla',
-					'date'    => new \DateTime()
-					
-			);
+			
+			if(null===$advert){
+				throw new NotFoundHttpException('advert inexistant correspondant au $id');
+			}
+			
+			//on recupère les categories concernant cet advert
+			$listcategories=$em->getRepository('OCPlatformBundle:Category')->findAll();
+			
+			//lier les categories à l'advert 
+			foreach ($listcategories as $category){
+				$advert->addCategory($category);
+			}
+			
+			//on recupere les competences (skills) possible
+			$listskills=$em->getRepository('OCPlatformBundle:Skill')->findAll();
+			
+			foreach($listskills as $skill){
+				$advertskill=new AdvertSkills();
+				
+				$advertskill->setLevel("débutant");
+				$advertskill->setAdvert($advert);
+				$advertskill->setSkill($skill);
+				
+				$em->persist($advertskill);
+			}
+			//on ne persiste pas l'advert qui est l'entité propriétaire
+			//car il est récupéré depuis Doctrine
+			// donc pas de $em->persist($advert)
+			
+			//enregistrer le changement
+			$em->flush();
 			
 			//appel de la vue de edition on utilisant renderResponse()
 			return $this->render('OCPlatformBundle:Advert:edit.html.twig',
@@ -184,6 +205,21 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 		}
 		
 		public function deleteAction($id){
+			
+			$em=$this->getDoctrine()->getManager();
+			$advert=$em->getRepository('OCPlatformBundle:Advert')->find($id);
+			
+			
+			if(null===$advert){
+				throw new NotFoundHttpException('advert inexistant correspondant au $id');
+			}
+			
+			$listcategories=$advert->getCategories();
+			
+			//supprimer les categories de l'advert
+			foreach ($listcategories as $category){
+				$advert->removeCategory($category);
+			}
 			
 			$content=$this->get('templating')->render('OCPlatformBundle:Advert:delete.html.twig',
 					array(

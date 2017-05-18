@@ -15,6 +15,24 @@
 	    {% endif %}
 	    
 	</div>
+	{% if not listskill is empty %}
+	<div class="well">
+		<h3>compétences requises :</h3>
+		{%  for advskill in listskill%}
+			<span>{{ advskill.skill.name }}({{advskill.level}}){% if not loop.last %},{% endif %}</span>
+		{% endfor %}
+	</div>
+	{% endif %}
+	
+	{% if not advert.categories.empty %}
+	<div class="well">
+		<h3>Categories liées</h3>
+		{% for category in advert.categories %}
+			<span>{{ category.name|capitalize }}{% if not loop.last %},{% endif %}</span>
+		{% endfor %}
+	</div>	
+	{% endif %}
+	
 	<div class="well">
 	<h3>Candidatures</h3>
 	<ul class="list-group">
