@@ -1,6 +1,8 @@
 <?php
 
 namespace OC\PlatformBundle\Entity;
+
+use OC\PlatformBundle\Entity\Application;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -12,6 +14,10 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Advert
 {
+	/**
+	 * @ORM\OneToMany(targetEntity="OC\PlatformBundle\Entity\Application", mappedBy="Advert")
+	 */
+	private $applications;
 	/**
 	 * 
 	 * @var collection object
@@ -71,6 +77,7 @@ class Advert
     public function __construct(){
     	$this->date= new \DateTime();
     	$this->categories=new ArrayCollection();
+    	$this->applications=new ArrayCollection();
     }
     
     public function getCategories(){
@@ -212,5 +219,42 @@ class Advert
     public function getImage()
     {
         return $this->image;
+    }
+
+    /**
+     * Add application
+     *
+     * @param \OC\PlatformBundle\Entity\Application $application
+     *
+     * @return Advert
+     */
+    public function addApplication(Application $application)
+    {
+        $this->applications[] = $application;
+        
+        // on lie l'annonce à la candidature
+        $application->setAdvert($this);
+
+        return $this;
+    }
+
+    /**
+     * Remove application
+     *
+     * @param \OC\PlatformBundle\Entity\Application $application
+     */
+    public function removeApplication(Application $application)
+    {
+        $this->applications->removeElement($application);
+    }
+
+    /**
+     * Get applications
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getApplications()
+    {
+        return $this->applications;
     }
 }

@@ -1,18 +1,29 @@
 <?php
 
 namespace OC\PlatformBundle\Entity;
-
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Advert
  *
- * @ORM\Table(name="advert")
+ * @ORM\Table(name="oc_advert")
  * @ORM\Entity(repositoryClass="OC\PlatformBundle\Repository\AdvertRepository")
  */
 class Advert
 {
-	
+	/**
+	 * @ORM\OneToMany(targetEntity="OC\PlatformBundle\Entity\Application", mappedBy="Advert")
+	 */
+	private $applications;
+	/**
+	 * 
+	 * @var collection object
+	 * 
+	 * @ORM\ManyToMany(targetEntity="OC\PlatformBundle\Entity\Category", cascade="persist")
+	 * @ORM\JoinTable(name="oc_advert_category")
+	 */
+	private $categories;
 	/**
 	 * 
 	 * @var Object
@@ -63,9 +74,20 @@ class Advert
     //constructeur
     public function __construct(){
     	$this->date= new \DateTime();
+    	$this->categories=new ArrayCollection();
     }
     
+    public function getCategories(){
+    	return $this->categories;
+    }
     
+    public function addCategory(Category $category){
+    	$this->categories[]=$category;
+    }
+    
+    public function removeCategory(Category $category){
+    	$this->categories->removeElement($category);
+    }
     /**
      * Get id
      *
@@ -171,5 +193,28 @@ class Advert
     {
         return $this->content;
     }
-}
 
+    /**
+     * Set image
+     *
+     * @param \OC\PlatformBundle\Entity\Image $image
+     *
+     * @return Advert
+     */
+    public function setImage(Image $image= null)
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    /**
+     * Get image
+     *
+     * @return \OC\PlatformBundle\Entity\Image
+     */
+    public function getImage()
+    {
+        return $this->image;
+    }
+}
