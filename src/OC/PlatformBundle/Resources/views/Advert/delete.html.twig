@@ -6,7 +6,12 @@
 </head>
 <body>
 	<h1>Suppression de l'Advert </h1>
-	<span>N° : {{id}}</span>
+	{% if advert is not empty %}
+	<span>N° : {{advert.id}}{{ advert.title }}</span>
+	{% else %}
+	<span>suppression de l'advert de id={{ id }} est reussie</span>
+	{% endif %}
+	
 	<p>ipsum</p>
 </body>
 </html>

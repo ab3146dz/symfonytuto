@@ -9,7 +9,20 @@
 	use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 	use Symfony\Component\HttpFoundation\Request;
 	use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+    use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+    
+    //partie use de formulaire
+    use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+    use Symfony\Component\Form\Extension\Core\Type\DateType;
+    use Symfony\Component\Form\Extension\Core\Type\FormType;
+    use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+    use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+    use Symfony\Component\Form\Extension\Core\Type\TextType;
+    //validation du formulaire
+	use Symfony\Component\Validator\Constraints\NotBlankValidator;
+	//injection de la classebuilder du formulaire de advert
+	use OC\PlatformBundle\Form\AdvertType;
+		   
 		//use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			
 	class AdvertController extends Controller{
@@ -19,7 +32,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 				// Notre liste d'annonce en dur
 				$em=$this->getDoctrine()->getEntityManager();
 				$listAdverts=$em->getRepository('OC\PlatformBundle\Entity\Advert')
-				->findAll();
+				->findBy(array('published'=>true));
 				/*$listAdverts = array(
 						array(
 								'title'   => 'Recherche développpeur Symfony',
@@ -86,13 +99,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 		
 		public function addAction(Request $request){
 			
-			//si c'est apr�s un ajout d'une annonce
-			if ($request->isMethod('POST')){
-				//creation d'une flash info "notice" qui va etre affiche dans la page home
-				$request->getSession()->getFlashBag()->add('notice','Annonce bien enregistr�e');
-				//redirection vers la page de home
-				return $this->redirectToRoute("oc_platform_home");
-			}
 			
 			//utilisation de notre service Antispam
 			//on récupère le service
@@ -107,7 +113,43 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			
 			//creation de l'objet advert
 			$advert=new Advert();
-			$advert->setTitle("Recherche développeur c++ ");
+			
+			//deux fonctions de generer le formulaire soit:
+			//$form=$this->get('form.factory')->create(AdvertType::class,$advert);
+			//soit:
+			$form=$this->createForm(AdvertType::class,$advert);
+			
+			
+			//si c'est apr�s un ajout d'une annonce
+			if ($request->isMethod('POST')){
+				
+				//on recupere les valeurs POST du formulaire
+				$form->handleRequest($request);
+				
+				//verifications des valeurs du POST de la request transmise au formulaire
+				if($form->isValid()){
+					
+					$image=new Image();
+					$image->setUrl("http://www.catswhocode.com/blog/wp-content/uploads/2016/06/javascript.jpg");
+					$image->setAlt("javascript");
+					
+					$advert->setImage($image);
+					//appel du EntityManager
+					$em=$this->getDoctrine()->getManager();
+					
+					$em->persist($advert);
+					$em->persist($image);
+					//on declenche l'enregistrement'
+					$em->flush();
+					
+					//creation d'une flash info "notice" qui va etre affiche dans la page home
+					$request->getSession()->getFlashBag()->add('notice','Annonce bien enregistrée');
+					//redirection vers la page de home
+					return $this->redirectToRoute("oc_platform_home");
+				}
+			}
+			
+			/*$advert->setTitle("Recherche développeur c++ ");
 			$advert->setAuthor("Abi");
 			$advert->setContent("nous recherchons un développeur c++");
 			
@@ -142,33 +184,45 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			//on declenche l'enregistrement'
 			$em->flush();
 			//appel de la vue d'ajout d'une annonce
+			*/
 			
-			$content=$this->get('templating')->render('OCPlatformBundle:Advert:add.html.twig',array('advert'=>$advert));
+			$content=$this->get('templating')->render('OCPlatformBundle:Advert:add.html.twig',array(
+						'form'=>$form->CreateView(),
+					
+			));
 			return new Response($content);
 		}
 		
 		public function editAction($id, Request $request){
+				
+			//ici on doit se connecter à la bdd pour recuperer les données
+			$em=$this->getDoctrine()->getManager();
+			$advert=$em->getRepository('OCPlatformBundle:Advert')->find($id);
+			if(null===$advert){
+				throw new NotFoundHttpException('advert inexistant correspondant au $id');
+			}
+			//construction du formulaire
+			$form=$this->get('form.factory')->create(AdvertType::class,$advert);
+			
+			
 			
 			//test de la methode de la requete
 			if($request->isMethod('POST')){
 				
-				//creation de'un flash info , qui va etre affich� dans la page home
-				$request->getSession()->getFlashBag('notice',' modification bien enregistr�e');
-				//redirection vers la vue view de $id
-				return $this->redirectToRoute('oc_platform_view',array('id'=>$id));
+				$form->handleRequest($request);
+				
+				if($form->isValid()){
+					$em->flush();
+					//creation de'un flash info , qui va etre affich� dans la page home
+					$request->getSession()->getFlashBag('notice',' modification bien enregistrée');
+					//redirection vers la vue view de $id
+					return $this->redirectToRoute('oc_platform_view',array('id'=>$id));
+				}
 			}
 			
-			//ici on doit se connecter à la bdd pour recuperer les données
-			//.........
-			//pour l'instant on va forcer en dur les données
-			$em=$this->getDoctrine()->getManager();
-			$advert=$em->getRepository('OCPlatformBundle:Advert')->find($id);
 			
 			
-			if(null===$advert){
-				throw new NotFoundHttpException('advert inexistant correspondant au $id');
-			}
-			
+			/*
 			//on recupère les categories concernant cet advert
 			$listcategories=$em->getRepository('OCPlatformBundle:Category')->findAll();
 			
@@ -195,11 +249,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			
 			//enregistrer le changement
 			$em->flush();
-			
+			*/
 			//appel de la vue de edition on utilisant renderResponse()
 			return $this->render('OCPlatformBundle:Advert:edit.html.twig',
 					array(
-							'advert'=> $advert
+							'form'=> $form->createView()
 					));
 			
 		}
@@ -221,9 +275,29 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 				$advert->removeCategory($category);
 			}
 			
+			$listApplication=$em->getRepository('OCPlatformBundle:Application')
+			->findBy(array('advert'=> $advert));
+			
+			foreach ($listApplication as $app){
+				$em->remove($app);
+			}
+			
+			//supprimer l'advert de advertskill
+			$listadvertskills=$em->getRepository(AdvertSkills::class)->findBy(array('advert'=>$advert));
+			
+			foreach($listadvertskills as $advertskill){
+				$em->remove($advertskill);
+			}
+			
+			$em->remove($advert);
+			// enregistrement les suppression
+			
+			$em->flush();
+			
 			$content=$this->get('templating')->render('OCPlatformBundle:Advert:delete.html.twig',
 					array(
-							'id'=> $id
+							'advert'=> $advert,
+							'id'=>$id
 					));
 			return new Response($content);
 		}
@@ -232,7 +306,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 			//exemple de liste
 			$em=$this->getDoctrine()->getEntityManager();
 			$listAdverts=$em->getRepository('OC\PlatformBundle\Entity\Advert')
-			->findBy(array(),array('date'=>'desc'),$limit);
+			->findBy(array('published'=>true),array('date'=>'desc'),$limit);
 			/*$listAdverts=array(
 					array('id'=>2,'title'=>'developpeur PHP'),
 					array('id'=>3,'title'=>'webmaster'),

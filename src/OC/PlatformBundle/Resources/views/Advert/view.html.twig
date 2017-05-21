@@ -33,6 +33,7 @@
 	</div>	
 	{% endif %}
 	
+	{% if listapplication is not empty %}
 	<div class="well">
 	<h3>Candidatures</h3>
 	<ul class="list-group">
@@ -41,6 +42,7 @@
 		{% endfor %}
 	</ul>	
 	</div>
+	{% endif %}
 	
 	<p>
 		<a href="{{ path('oc_platform_home')}}" class="btn btn-default">
@@ -51,7 +53,7 @@
 		<i class="glyphicon glyphicon-chevron-edit"></i>
 		 modifier l'annonce
 		</a>
-		<a href="{{path('oc_platform_edit',{'id':advert.id})}}" class="btn btn-danger">
+		<a href="{{path('oc_platform_delete',{'id':advert.id})}}" class="btn btn-danger">
 		<i class="glyphicon glyphicon-chevron-trash"></i>
 		 supprimer l'annonce
 		</a>

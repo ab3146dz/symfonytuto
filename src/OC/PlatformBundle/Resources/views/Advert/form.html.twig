@@ -1,4 +1,131 @@
-<h3>formulaire d'annonce</h3>
+{# src/OC/PlatformBundle/Resources/views/Advert/form.html.twig #}
+
+<h3>Formulaire d'annonce</h3>
+
 <div class="well">
-ici se trouve le formulaire
+  {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+
+  {# Les erreurs générales du formulaire. #}
+  {{ form_errors(form) }}
+
+  {# Génération du label + error + widget pour un champ. #}
+  {{ form_row(form.date) }}
+
+  {# Génération manuelle et éclatée : #}
+  <div class="form-group">
+    {# Génération du label. #}
+    {{ form_label(form.title, "Titre de l'annonce", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+    {# Affichage des erreurs pour ce champ précis. #}
+    {{ form_errors(form.title) }}
+
+    <div class="col-sm-10">
+      {# Génération de l'input. #}
+      {{ form_widget(form.title, {'attr': {'class': 'form-control'}}) }}
+    </div>
+  </div>
+
+  {# Idem pour un autre champ. #}
+  <div class="form-group">
+    {{ form_label(form.content, "Contenu de l'annonce", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+    {{ form_errors(form.content) }}
+    <div class="col-sm-10">
+      {{ form_widget(form.content, {'attr': {'class': 'form-control'}}) }}
+    </div>
+  </div>
+
+  {{ form_row(form.author) }}
+  
+  
+  <div class="form-group">
+      {{ form_label(form.image.url, "Url",{'label_attr':{'class':'col-sm-2 control-label'}}) }}
+      {{ form_errors(form.image.url) }}
+      <div class="col-sm-10">
+      	{{ form_widget(form.image.url, {'attr': {'class': 'form-control'}}) }}
+      </div>
+  </div>
+  
+  <div class="form-group">
+      {{ form_label(form.image.alt, "Alt",{'label_attr':{'class':'col-sm-2 control-label'}}) }}
+      {{ form_errors(form.image.alt) }}
+      <div class="col-sm-10">
+      	{{ form_widget(form.image.alt, {'attr': {'class': 'form-control'}}) }}
+      </div>
+  </div>
+  
+  <div class="form-group categories" data-prototype="&lt;input&#x20;type&#x3D;&quot;text&quot;&#x20;id&#x3D;&quot;oc_platformbundle_advert_categories___name___name&quot;&#x20;name&#x3D;&quot;oc_platformbundle_advert&#x5B;categories&#x5D;&#x5B;__name__&#x5D;&#x5B;name&#x5D;&quot;&#x20;required&#x3D;&quot;required&quot;&#x20;class&#x3D;&quot;form-control&quot;&#x20;&#x2F;&gt;">
+  	<h3>Categories</h3>
+        {# iterate over each existing tag and render its only field: name #}
+        {% for category in form.categories %}
+           {{ form_errors(category.name) }}
+           {{ form_widget(category.name,{'attr':{'class':'form-control'}}) }}
+        {% endfor %}
+        
+   </div>
+  
+  {{ form_row(form.published) }}
+  
+  {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
+  {{ form_widget(form.save, {'attr': {'class': 'btn btn-primary'}}) }}
+
+  {# Génération automatique des champs pas encore écrits.
+     Dans cet exemple, ce serait le champ CSRF (géré automatiquement par Symfony !)
+     et tous les champs cachés (type « hidden »). #}
+  {{ form_rest(form) }}
+
+  {# Fermeture de la balise <form> du formulaire HTML #}
+  {{ form_end(form) }}
 </div>
+
+
+{# On charge la bibliothèque jQuery. Ici, je la prends depuis le CDN google
+   mais si vous l'avez en local, changez simplement l'adresse. #}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+{# Voici le script en question : #}
+<script type="text/javascript">
+(function($){
+    var $collectionHolder;
+    
+    //setup an "add a tag" link
+    var $addTagLink = $('<a href="#" class="add_tag_link">Add a Categorie</a>');
+    var $newLinkLi = $('<span></span>').append($addTagLink);
+    
+    jQuery(document).ready(function() {
+     // obtenir le div conteneur des categories
+     $collectionHolder = $('div.categories');
+    
+     // add the "add a tag" a la suite des categories
+     $collectionHolder.append($newLinkLi);
+    
+     // compter le nombre des input contenur dans le conteneur et l'attribuer à la var index 
+     $collectionHolder.data('index', $collectionHolder.find(':input').length);
+    
+     $addTagLink.on('click', function(e) {
+         // prevent the link from creating a "#" on the URL
+         e.preventDefault();
+    
+         // add a new tag form (see next code block)
+         addTagForm($collectionHolder, $newLinkLi);
+     });
+    });
+})(jQuery); 
+    function addTagForm($collectionHolder, $newLinkLi) {
+        // Obtenir le prototype de données expliqué plus tôt
+        var prototype = $collectionHolder.data('prototype');
+		alert(prototype)
+        // get the new index
+        var index = $collectionHolder.data('index');
+
+        // Replace '__name__' in the prototype's HTML to
+        // instead be a number based on how many items we have
+        var newForm = prototype.replace(/__name__/g, index);
+
+        // increase the index with one for the next item
+        $collectionHolder.data('index', index + 1);
+
+        // Display the form in the page in an li, before the "Add a tag" link li
+        var $newFormLi = $('<span></span>').append(newForm);
+        $newLinkLi.before($newFormLi);
+    }
+</script>
